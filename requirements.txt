@@ -1,2 +1,4 @@
 fusepy>=3.0.1
 requests>=2.28.0
+rich>=13.0.0
+inquirer>=3.1.0

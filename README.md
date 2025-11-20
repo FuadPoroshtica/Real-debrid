@@ -4,12 +4,16 @@ A simple Python tool that mounts your Real-Debrid account as a virtual drive on 
 
 ## Features
 
-- Mount Real-Debrid torrents as a virtual filesystem
-- Read-only access to downloaded torrents
-- Lazy loading and streaming support
-- Simple CLI interface
-- Easy Jellyfin integration
-- Caching for improved performance
+- **Beautiful TUI** - Interactive menu-driven interface with rich formatting
+- **FUSE Mount** - Mount Real-Debrid torrents as a virtual filesystem
+- ***arr Stack Integration** - Full support for Radarr, Sonarr, Jellyseerr, Prowlarr
+- **Automatic Organization** - Smart file organization by media type
+- **Symlink Resolver** - Creates organized symlinks for media management
+- **Lazy Loading** - Stream on-demand, no local storage required
+- **Jellyfin Ready** - Direct integration with Jellyfin media server
+- **Excellent Error Handling** - Clear, actionable error messages
+- **Auto-mount Support** - Systemd service for mounting on boot
+- **Caching** - Intelligent caching for improved performance
 
 ## Requirements
 
@@ -29,7 +33,12 @@ cd Real-debrid
 
 # Run installation script
 ./install.sh
+
+# Start the interactive TUI
+./start.py
 ```
+
+That's it! The TUI will guide you through the rest of the setup.
 
 ### Manual Installation
 
@@ -83,7 +92,22 @@ The configuration will be saved to `~/.config/rdmount/config.json`
 
 ## Usage
 
-### Basic Commands
+### Quick Start with TUI
+
+The easiest way to use this tool is through the interactive TUI:
+
+```bash
+./start.py
+```
+
+The TUI provides a beautiful menu-driven interface for:
+- Setup and configuration
+- Mounting/unmounting
+- Status monitoring
+- *arr stack integration
+- Jellyfin setup guides
+
+### Basic Commands (CLI)
 
 **Mount Real-Debrid:**
 ```bash
@@ -125,6 +149,126 @@ Once mounted, your Real-Debrid torrents will be organized as:
 │   └── movie.mp4
 └── ...
 ```
+
+## *arr Stack Integration
+
+This tool includes full support for the *arr stack, creating organized symlinks that work seamlessly with:
+
+- **Radarr** - Automated movie management
+- **Sonarr** - Automated TV show management
+- **Jellyseerr** - Request management interface
+- **Prowlarr** - Indexer aggregation
+- **Jellyfin** - Media server
+
+### How It Works
+
+1. **Real-Debrid** downloads your torrents to the cloud
+2. **FUSE Mount** makes them accessible as a local filesystem
+3. **Resolver** creates organized symlinks:
+   - Movies → `~/media/movies/MovieName (Year)/file.mkv`
+   - TV Shows → `~/media/tv/ShowName/Season 01/episode.mkv`
+4. ***arr apps** can now manage and serve the media
+
+### Setup with TUI
+
+The easiest way is using the interactive TUI:
+
+```bash
+./start.py
+```
+
+1. Choose "Setup / Reconfigure"
+2. Enable *arr stack integration
+3. Configure your media paths
+4. Mount Real-Debrid
+5. Run the resolver
+
+### Manual Setup
+
+1. **Configure paths in config:**
+   ```bash
+   nano ~/.config/rdmount/config.json
+   ```
+
+   Add:
+   ```json
+   {
+     "enable_arr_stack": true,
+     "movies_path": "~/media/movies",
+     "tv_path": "~/media/tv"
+   }
+   ```
+
+2. **Mount Real-Debrid:**
+   ```bash
+   ./rdmount.py mount ~/realdebrid --daemon
+   ```
+
+3. **Run resolver (one-time):**
+   ```bash
+   python3 resolver.py
+   ```
+
+4. **Or start resolver watcher (continuous):**
+   ```bash
+   python3 resolver.py watch 60
+   ```
+   (Checks every 60 seconds for new torrents)
+
+### Configure *arr Apps
+
+**Radarr Setup:**
+```
+Settings → Media Management → Root Folders
+Add: ~/media/movies
+```
+
+**Sonarr Setup:**
+```
+Settings → Media Management → Root Folders
+Add: ~/media/tv
+```
+
+**Jellyseerr Setup:**
+```
+Settings → Services
+Add Radarr and Sonarr with above paths
+```
+
+**Prowlarr Setup:**
+```
+Connect to Radarr and Sonarr instances
+Configure indexers as needed
+```
+
+### Resolver Commands
+
+**One-time resolution:**
+```bash
+python3 resolver.py
+```
+
+**Watch mode (auto-resolve new torrents):**
+```bash
+python3 resolver.py watch 60
+```
+
+**Or use the TUI menu for easier access**
+
+### File Organization
+
+The resolver automatically organizes files based on naming patterns:
+
+**Movies (detected by):**
+- Year in filename (2024, 2023, etc.)
+- No season/episode patterns
+- Organized as: `MovieName (Year)/file.mkv`
+
+**TV Shows (detected by):**
+- S01E01 patterns
+- 1x01 patterns
+- "Season" in name
+- Organized as: `ShowName/Season 01/file.mkv`
 
 ## Jellyfin Integration
 
@@ -236,7 +380,9 @@ fusermount -u ~/realdebrid
 
 ```
 Real-debrid/
-├── rdmount.py              # Main CLI script
+├── start.py                # 🎯 Interactive TUI (START HERE!)
+├── rdmount.py              # CLI mount tool
+├── resolver.py             # Symlink resolver for *arr stack
 ├── realdebrid_api.py       # Real-Debrid API client
 ├── realdebrid_fs.py        # FUSE filesystem implementation
 ├── requirements.txt        # Python dependencies
