@@ -206,6 +206,32 @@ services:
       - sonarr
       - prowlarr
 
+  # Service Configurator (Auto-setup)
+  service-configurator:
+    image: python:3.11-slim
+    container_name: service-configurator
+    restart: "no"
+    environment:
+      - RD_API_TOKEN=${RD_API_TOKEN}
+      - JELLYFIN_API_KEY=${JELLYFIN_API_KEY:-}
+    volumes:
+      - ./service_configurator.py:/app/service_configurator.py:ro
+      - ${CONFIG_DIR:-./config}:/config
+      - radarr-config:/radarr-config
+      - sonarr-config:/sonarr-config
+      - prowlarr-config:/prowlarr-config
+    networks:
+      - media-stack
+    depends_on:
+      - radarr
+      - sonarr
+      - prowlarr
+      - jellyfin
+    command: >
+      sh -c "pip install requests --quiet &&
+             sleep 60 &&
+             python /app/service_configurator.py"
+
 volumes:
   realdebrid-mount:
     driver: local

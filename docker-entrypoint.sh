@@ -39,5 +39,14 @@ fi
 echo "Mounting Real-Debrid..."
 python3 /app/rdmount.py mount /mnt/realdebrid --daemon
 
+# Start resolver watcher for automatic media organization
+echo "Starting media resolver (auto-organizes content for Jellyfin)..."
+python3 /app/resolver.py watch 60 &
+
+echo "✅ All services started!"
+echo "   - Real-Debrid mounted at /mnt/realdebrid"
+echo "   - Media auto-organized to /media/movies and /media/tv"
+echo "   - Jellyfin will automatically scan new content"
+
 # Keep container running
 tail -f /dev/null

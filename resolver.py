@@ -332,6 +332,32 @@ class MediaResolver:
 
         return stats
 
+    def trigger_jellyfin_scan(self):
+        """Trigger Jellyfin library scan for updated content"""
+        jellyfin_url = os.getenv('JELLYFIN_URL', 'http://jellyfin:8096')
+        jellyfin_api_key = os.getenv('JELLYFIN_API_KEY')
+
+        if not jellyfin_api_key:
+            # Jellyfin API key not configured, skip scan
+            return
+
+        try:
+            import requests
+            # Trigger library scan
+            headers = {'X-MediaBrowser-Token': jellyfin_api_key}
+            response = requests.post(
+                f'{jellyfin_url}/Library/Refresh',
+                headers=headers,
+                timeout=10
+            )
+
+            if response.status_code == 204:
+                print("📺 Triggered Jellyfin library scan")
+            else:
+                print(f"⚠️  Jellyfin scan returned: {response.status_code}")
+        except Exception as e:
+            print(f"⚠️  Could not trigger Jellyfin scan: {e}")
+
     def watch_and_resolve(self, interval: int = 60):
         """
         Watch for new torrents and resolve them
@@ -349,6 +375,8 @@ class MediaResolver:
 
                 if stats['total'] > 0:
                     print(f"\n✨ Resolved {stats['total']} files ({stats['movies']} movies, {stats['tv']} TV shows)")
+                    # Trigger Jellyfin scan for new content
+                    self.trigger_jellyfin_scan()
 
                 time.sleep(interval)
 
