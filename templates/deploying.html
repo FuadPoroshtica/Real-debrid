@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploying... - Real-Debrid Media Stack</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .deploy-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #667eea;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .status-text {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .progress-steps {
+            text-align: left;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .step-item.active {
+            background: #e8f4fd;
+            border-left: 4px solid #667eea;
+        }
+
+        .step-item.complete {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+        }
+
+        .step-icon {
+            font-size: 1.5em;
+            margin-right: 15px;
+        }
+
+        .step-text {
+            flex: 1;
+            color: #333;
+        }
+
+        .info-box {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="deploy-container">
+        <div class="spinner"></div>
+        <h1>Deploying Your Stack! 🚀</h1>
+        <p class="status-text">
+            Sit back and relax! We're setting up your complete media stack.
+            This usually takes 5-10 minutes.
+        </p>
+
+        <div class="progress-steps">
+            <div class="step-item complete">
+                <div class="step-icon">✅</div>
+                <div class="step-text">Configuration saved</div>
+            </div>
+            <div class="step-item active">
+                <div class="step-icon">⏳</div>
+                <div class="step-text">Pulling Docker images...</div>
+            </div>
+            <div class="step-item">
+                <div class="step-icon">⏳</div>
+                <div class="step-text">Starting services...</div>
+            </div>
+            <div class="step-item">
+                <div class="step-icon">⏳</div>
+                <div class="step-text">Configuring connections...</div>
+            </div>
+            <div class="step-item">
+                <div class="step-icon">⏳</div>
+                <div class="step-text">Starting AI monitor...</div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <p><strong>💡 What's happening:</strong></p>
+            <p>• Downloading and starting all services</p>
+            <p>• Setting up Real-Debrid mount</p>
+            <p>• Configuring Jellyfin, Radarr, Sonarr, etc.</p>
+            <p>• Initializing AI monitoring</p>
+            <p>• Creating your dashboard</p>
+        </div>
+    </div>
+
+    <script>
+        // Check status every 5 seconds
+        setInterval(() => {
+            fetch('/api/status')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'complete') {
+                        window.location.href = '/';
+                    }
+                });
+        }, 5000);
+
+        // Animate progress steps
+        let currentActiveStep = 1;
+        setInterval(() => {
+            const steps = document.querySelectorAll('.step-item');
+            if (currentActiveStep < steps.length - 1) {
+                steps[currentActiveStep].classList.remove('active');
+                steps[currentActiveStep].classList.add('complete');
+                currentActiveStep++;
+                steps[currentActiveStep].classList.add('active');
+            }
+        }, 15000); // Every 15 seconds
+    </script>
+</body>
+</html>

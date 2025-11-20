@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Debrid Media Stack - Setup Wizard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .wizard-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .wizard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .wizard-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .wizard-header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            height: 6px;
+            margin-top: 20px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: white;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .wizard-body {
+            padding: 40px;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        .step-description {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .form-group a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .form-group a:hover {
+            text-decoration: underline;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .info-box {
+            background: #e8f4fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: #1976D2;
+        }
+
+        .success-icon {
+            font-size: 4em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="wizard-container">
+        <div class="wizard-header">
+            <h1>🎬 Real-Debrid Media Stack</h1>
+            <p>Easy Setup Wizard - Let's get you started!</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress" style="width: 25%"></div>
+            </div>
+        </div>
+
+        <div class="wizard-body">
+            <!-- Step 1: Welcome -->
+            <div class="step active" data-step="1">
+                <h2>Welcome! 👋</h2>
+                <p class="step-description">
+                    This wizard will help you set up your complete media stack in just a few minutes.
+                    You'll get Jellyfin, Radarr, Sonarr, Prowlarr, Jellyseerr, and AI-powered monitoring!
+                </p>
+
+                <div class="info-box">
+                    <p><strong>✨ What you'll need:</strong></p>
+                    <p>• Real-Debrid API token (2 minutes to get)</p>
+                    <p>• Anthropic API key for AI monitoring (optional)</p>
+                    <p>• Your timezone</p>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="nextStep()">Let's Go! 🚀</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Real-Debrid -->
+            <div class="step" data-step="2">
+                <h2>Real-Debrid Configuration 🔑</h2>
+                <p class="step-description">
+                    Real-Debrid is the backbone of your media stack. It provides instant access to your torrents.
+                </p>
+
+                <div class="form-group">
+                    <label for="rd_api_token">Real-Debrid API Token *</label>
+                    <input type="text" id="rd_api_token" placeholder="Paste your API token here" required>
+                    <small>Get it from: <a href="https://real-debrid.com/apitoken" target="_blank">https://real-debrid.com/apitoken</a></small>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>💡 Tip:</strong> Log in to Real-Debrid, visit the API page, and copy the token. It's that simple!</p>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn btn-primary" onclick="saveAndNext()">Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: AI Monitoring -->
+            <div class="step" data-step="3">
+                <h2>AI-Powered Monitoring 🤖</h2>
+                <p class="step-description">
+                    Enable Claude AI to monitor your stack, detect errors, and even fix them automatically!
+                    This is optional but highly recommended.
+                </p>
+
+                <div class="form-group">
+                    <label for="anthropic_api_key">Anthropic API Key (Optional)</label>
+                    <input type="text" id="anthropic_api_key" placeholder="sk-ant-...">
+                    <small>Get it from: <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic Console</a></small>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>🧠 With AI Monitoring:</strong></p>
+                    <p>• Automatic error detection and fixing</p>
+                    <p>• Human-friendly error explanations</p>
+                    <p>• 24/7 monitoring of all services</p>
+                    <p>• Step-by-step problem solving</p>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn btn-primary" onclick="saveAndNext()">Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 4: System Settings -->
+            <div class="step" data-step="4">
+                <h2>System Settings ⚙️</h2>
+                <p class="step-description">
+                    Just a few more details to customize your setup.
+                </p>
+
+                <div class="form-group">
+                    <label for="timezone">Timezone</label>
+                    <select id="timezone">
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles">
+                        <option value="America/Chicago">America/Chicago</option>
+                        <option value="Europe/London">Europe/London</option>
+                        <option value="Europe/Paris">Europe/Paris</option>
+                        <option value="Asia/Tokyo">Asia/Tokyo</option>
+                        <option value="Australia/Sydney">Australia/Sydney</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="admin_user">Admin Username</label>
+                    <input type="text" id="admin_user" value="admin" placeholder="admin">
+                    <small>For accessing admin panels</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="admin_password">Admin Password</label>
+                    <input type="password" id="admin_password" placeholder="Choose a secure password" required>
+                    <small>Make it strong!</small>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn btn-primary" onclick="saveAndNext()">Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Ready to Deploy -->
+            <div class="step" data-step="5">
+                <h2>Ready to Deploy! 🚀</h2>
+                <p class="step-description">
+                    Everything is configured! Click the button below to start deploying your media stack.
+                    This will take about 5-10 minutes.
+                </p>
+
+                <div class="info-box">
+                    <p><strong>📦 What will be installed:</strong></p>
+                    <p>• Real-Debrid Mount with WebDAV</p>
+                    <p>• Jellyfin Media Server</p>
+                    <p>• Jellyseerr Request Management</p>
+                    <p>• Radarr Movie Manager</p>
+                    <p>• Sonarr TV Show Manager</p>
+                    <p>• Prowlarr Indexer Manager</p>
+                    <p>• AI Monitor (if configured)</p>
+                    <p>• Nginx Reverse Proxy</p>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>🌐 After deployment, access at:</strong></p>
+                    <p><strong>http://debrid.local</strong></p>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn btn-primary" onclick="startDeployment()">Deploy Now! 🎉</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+        const config = {};
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        function showStep(step) {
+            document.querySelectorAll('.step').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            const stepEl = document.querySelector(`.step[data-step="${step}"]`);
+            if (stepEl) {
+                stepEl.classList.add('active');
+            }
+
+            currentStep = step;
+            updateProgress();
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                showStep(currentStep + 1);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                showStep(currentStep - 1);
+            }
+        }
+
+        function saveAndNext() {
+            // Collect current step data
+            if (currentStep === 2) {
+                config.rd_api_token = document.getElementById('rd_api_token').value;
+                if (!config.rd_api_token) {
+                    alert('Please enter your Real-Debrid API token');
+                    return;
+                }
+            } else if (currentStep === 3) {
+                config.anthropic_api_key = document.getElementById('anthropic_api_key').value || '';
+            } else if (currentStep === 4) {
+                config.timezone = document.getElementById('timezone').value;
+                config.admin_user = document.getElementById('admin_user').value;
+                config.admin_password = document.getElementById('admin_password').value;
+
+                if (!config.admin_password) {
+                    alert('Please set an admin password');
+                    return;
+                }
+            }
+
+            // Save to backend
+            fetch('/api/save_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            }).then(() => {
+                nextStep();
+            });
+        }
+
+        function startDeployment() {
+            // Start deployment
+            fetch('/api/start_deployment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            }).then(() => {
+                window.location.href = '/deploying';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -7,3 +7,4 @@ wsgidav>=4.0.0
 cheroot>=9.0.0
 anthropic>=0.18.0
 docker>=7.0.0
+flask>=3.0.0
