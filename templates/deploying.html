@@ -159,8 +159,12 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.status === 'complete') {
-                        window.location.href = '/';
+                        // Reload current page - will show complete template
+                        window.location.reload();
                     }
+                })
+                .catch(err => {
+                    console.log('Status check failed, will retry...');
                 });
         }, 5000);
 
