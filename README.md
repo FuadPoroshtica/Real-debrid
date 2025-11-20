@@ -1,19 +1,43 @@
 # Real-Debrid Mount for Jellyfin
 
-A simple Python tool that mounts your Real-Debrid account as a virtual drive on Linux using FUSE, making it easy to integrate with Jellyfin or other media servers.
+**The most advanced and easy-to-use Real-Debrid solution - combining the best of zurg with superior usability!**
 
-## Features
+A powerful Python tool that mounts your Real-Debrid account as a virtual drive on Linux using FUSE, with advanced features for Jellyfin, Plex, and the entire *arr stack.
 
+## 🚀 Quick Start
+
+```bash
+./install.sh
+./start.py
+```
+
+That's it! The beautiful TUI will guide you through everything.
+
+## ✨ Features
+
+### Core Features
 - **Beautiful TUI** - Interactive menu-driven interface with rich formatting
 - **FUSE Mount** - Mount Real-Debrid torrents as a virtual filesystem
 - ***arr Stack Integration** - Full support for Radarr, Sonarr, Jellyseerr, Prowlarr
 - **Automatic Organization** - Smart file organization by media type
 - **Symlink Resolver** - Creates organized symlinks for media management
 - **Lazy Loading** - Stream on-demand, no local storage required
-- **Jellyfin Ready** - Direct integration with Jellyfin media server
+- **Jellyfin & Plex Ready** - Direct integration with media servers
 - **Excellent Error Handling** - Clear, actionable error messages
 - **Auto-mount Support** - Systemd service for mounting on boot
-- **Caching** - Intelligent caching for improved performance
+
+### Advanced Features (Inspired by Zurg)
+- **WebDAV Server** - rclone-compatible interface for remote mounting
+- **Health Monitoring** - Automatic torrent health checks and repair
+- **Library Hooks** - Auto-scan Plex/Jellyfin on library updates
+- **RAR Cleanup** - Automatically removes archive-only torrents
+- **Regex Filtering** - Advanced file organization with patterns
+- **VFS Caching** - Configurable caching for optimal performance
+- **YAML Configuration** - Powerful configuration system
+- **Integration APIs** - Native Plex, Jellyfin, Radarr, Sonarr support
+
+**📚 See [ADVANCED.md](ADVANCED.md) for complete advanced features documentation**
+**⚡ See [QUICKSTART_ADVANCED.md](QUICKSTART_ADVANCED.md) for 5-minute setup guide**
 
 ## Requirements
 
