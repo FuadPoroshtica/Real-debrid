@@ -170,27 +170,59 @@ install_docker_compose() {
 install_python_requirements() {
     log_step "Installing Python Requirements"
 
-    # Install pip if not available
+    # Install pip and venv if not available
     if ! command -v pip3 &> /dev/null; then
+        log_info "Installing pip and venv..."
         $SUDO apt-get update -qq
-        $SUDO apt-get install -y python3-pip python3-venv
+        $SUDO apt-get install -y python3-pip python3-venv python3-full
+    fi
+
+    # Ensure python3-venv is installed
+    if ! python3 -m venv --help &> /dev/null; then
+        log_info "Installing python3-venv..."
+        $SUDO apt-get install -y python3-venv python3-full
     fi
 
     # Create virtual environment for deployment
     log_info "Creating Python virtual environment..."
-    if [ ! -d "venv" ]; then
-        python3 -m venv venv
+    if [ -d "venv" ]; then
+        log_info "Removing old venv..."
+        rm -rf venv
     fi
 
-    # Install Flask in virtual environment
-    log_info "Installing Flask and dependencies..."
-    ./venv/bin/pip install --quiet flask 2>/dev/null || {
-        log_warning "Virtual env install failed, trying system install..."
-        pip3 install --break-system-packages flask 2>/dev/null || {
-            log_error "Failed to install Flask"
-            exit 1
-        }
+    python3 -m venv venv || {
+        log_error "Failed to create virtual environment"
+        log_info "Trying system-wide installation instead..."
+        USE_SYSTEM_PYTHON=true
     }
+
+    if [ "$USE_SYSTEM_PYTHON" != "true" ]; then
+        # Install Flask in virtual environment with verbose output
+        log_info "Installing Flask in virtual environment..."
+        ./venv/bin/pip install --upgrade pip setuptools wheel >/dev/null 2>&1 || true
+
+        if ./venv/bin/pip install flask 2>&1 | tee /tmp/flask_install.log | grep -q "Successfully installed"; then
+            log_success "Flask installed in virtual environment"
+            export USE_VENV=true
+        else
+            log_warning "Virtual env install failed, trying system install..."
+            log_info "Install log saved to /tmp/flask_install.log"
+            USE_SYSTEM_PYTHON=true
+        fi
+    fi
+
+    # Fallback to system-wide installation
+    if [ "$USE_SYSTEM_PYTHON" = "true" ]; then
+        log_info "Installing Flask system-wide..."
+        if pip3 install --break-system-packages flask 2>&1 | grep -q "Successfully installed\|Requirement already satisfied"; then
+            log_success "Flask installed system-wide"
+            export USE_VENV=false
+        else
+            log_error "Failed to install Flask"
+            log_error "Please install manually: pip3 install --break-system-packages flask"
+            exit 1
+        fi
+    fi
 
     log_success "Python requirements installed"
 }
@@ -201,7 +233,7 @@ launch_web_wizard() {
     echo -e "${CYAN}Starting beautiful web interface for configuration...${NC}\n"
 
     # Determine which Python to use
-    if [ -f "venv/bin/python3" ]; then
+    if [ -f "venv/bin/python3" ] && [ "$USE_VENV" != "false" ]; then
         PYTHON_CMD="./venv/bin/python3"
         log_info "Using virtual environment Python"
     else
@@ -209,16 +241,27 @@ launch_web_wizard() {
         log_info "Using system Python"
     fi
 
+    # Verify Flask is available
+    if ! $PYTHON_CMD -c "import flask" 2>/dev/null; then
+        log_error "Flask is not available in Python environment"
+        log_error "Installation may have failed. Check /tmp/flask_install.log"
+        log_info "Try running: pip3 install --break-system-packages flask"
+        exit 1
+    fi
+
+    log_success "Flask is available"
+
     # Start Flask web server in background
     $PYTHON_CMD setup_wizard.py &
     FLASK_PID=$!
 
     log_info "Web server starting..."
-    sleep 3
+    sleep 5
 
     # Check if Flask started successfully
     if ! kill -0 $FLASK_PID 2>/dev/null; then
         log_error "Failed to start web server"
+        log_error "Check the error messages above"
         exit 1
     fi
 
