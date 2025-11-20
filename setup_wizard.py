@@ -112,10 +112,18 @@ ADMIN_PASSWORD={config.get('admin_password', 'changeme')}
             os.makedirs(config_dir_path, exist_ok=True)
 
             # Try docker compose (new) first, fallback to docker-compose (old)
+            # Also try with sudo if regular command fails (for fresh Docker installs)
             try:
                 subprocess.run(['docker', 'compose', 'up', '-d'], check=True)
             except (subprocess.CalledProcessError, FileNotFoundError):
-                subprocess.run(['docker-compose', 'up', '-d'], check=True)
+                try:
+                    subprocess.run(['docker-compose', 'up', '-d'], check=True)
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    # Try with sudo (needed if Docker just installed)
+                    try:
+                        subprocess.run(['sudo', 'docker', 'compose', 'up', '-d'], check=True)
+                    except:
+                        subprocess.run(['sudo', 'docker-compose', 'up', '-d'], check=True)
 
             # Wait for services to initialize
             import time

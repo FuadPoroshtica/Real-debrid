@@ -84,26 +84,38 @@ check_prerequisites() {
     log_success "Permissions OK"
 
     # Check for Docker
+    DOCKER_INSTALLED_NOW=false
     if ! command -v docker &> /dev/null; then
         log_warning "Docker not found. Installing..."
         install_docker
     else
-        log_success "Docker found: $(docker --version)"
+        log_success "Docker found: $(docker --version 2>/dev/null || $SUDO docker --version)"
     fi
 
     # Check for Docker Compose
-    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+    if ! docker compose version &> /dev/null 2>&1 && ! $SUDO docker compose version &> /dev/null 2>&1; then
         log_warning "Docker Compose not found. Installing..."
         install_docker_compose
     else
         log_success "Docker Compose found"
     fi
 
+    # If Docker was just installed, use sudo for Docker commands
+    if [ "$DOCKER_INSTALLED_NOW" = true ]; then
+        log_warning "Docker was just installed. Using sudo for Docker commands in this session."
+        log_info "After this script completes, logout and login for Docker permissions."
+        export DOCKER_CMD="$SUDO docker"
+        export DOCKER_COMPOSE_CMD="$SUDO docker compose"
+    else
+        export DOCKER_CMD="docker"
+        export DOCKER_COMPOSE_CMD="docker compose"
+    fi
+
     # Check for Python 3
     if ! command -v python3 &> /dev/null; then
         log_warning "Python 3 not found. Installing..."
-        $SUDO apt-get update
-        $SUDO apt-get install -y python3 python3-pip
+        $SUDO apt-get update -qq
+        $SUDO apt-get install -y python3 python3-pip python3-venv
     else
         log_success "Python 3 found: $(python3 --version)"
     fi
@@ -112,7 +124,7 @@ check_prerequisites() {
 install_docker() {
     log_info "Installing Docker..."
 
-    $SUDO apt-get update
+    $SUDO apt-get update -qq
     $SUDO apt-get install -y \
         ca-certificates \
         curl \
@@ -121,7 +133,7 @@ install_docker() {
 
     # Add Docker's official GPG key
     $SUDO mkdir -p /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | $SUDO gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | $SUDO gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null
 
     # Set up repository
     echo \
@@ -129,14 +141,22 @@ install_docker() {
       $(lsb_release -cs) stable" | $SUDO tee /etc/apt/sources.list.d/docker.list > /dev/null
 
     # Install Docker
-    $SUDO apt-get update
+    $SUDO apt-get update -qq
     $SUDO apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
     # Add user to docker group
     $SUDO usermod -aG docker $USER
 
+    # Start Docker service
+    $SUDO systemctl start docker
+    $SUDO systemctl enable docker
+
     log_success "Docker installed successfully"
-    log_warning "You may need to log out and back in for Docker permissions to take effect"
+
+    # Apply docker group immediately for this script using newgrp
+    # This allows continuing without logout
+    log_info "Applying Docker group permissions..."
+    DOCKER_INSTALLED_NOW=true
 }
 
 install_docker_compose() {
@@ -152,12 +172,25 @@ install_python_requirements() {
 
     # Install pip if not available
     if ! command -v pip3 &> /dev/null; then
-        $SUDO apt-get install -y python3-pip
+        $SUDO apt-get update -qq
+        $SUDO apt-get install -y python3-pip python3-venv
     fi
 
-    # Install required packages
+    # Create virtual environment for deployment
+    log_info "Creating Python virtual environment..."
+    if [ ! -d "venv" ]; then
+        python3 -m venv venv
+    fi
+
+    # Install Flask in virtual environment
     log_info "Installing Flask and dependencies..."
-    pip3 install flask >/dev/null 2>&1
+    ./venv/bin/pip install --quiet flask 2>/dev/null || {
+        log_warning "Virtual env install failed, trying system install..."
+        pip3 install --break-system-packages flask 2>/dev/null || {
+            log_error "Failed to install Flask"
+            exit 1
+        }
+    }
 
     log_success "Python requirements installed"
 }
@@ -167,8 +200,17 @@ launch_web_wizard() {
 
     echo -e "${CYAN}Starting beautiful web interface for configuration...${NC}\n"
 
+    # Determine which Python to use
+    if [ -f "venv/bin/python3" ]; then
+        PYTHON_CMD="./venv/bin/python3"
+        log_info "Using virtual environment Python"
+    else
+        PYTHON_CMD="python3"
+        log_info "Using system Python"
+    fi
+
     # Start Flask web server in background
-    python3 setup_wizard.py &
+    $PYTHON_CMD setup_wizard.py &
     FLASK_PID=$!
 
     log_info "Web server starting..."
@@ -259,7 +301,7 @@ wait_for_deployment() {
     MAX_WAIT=300  # 5 minutes max
 
     while [ $WAIT_TIME -lt $MAX_WAIT ]; do
-        if docker ps --format '{{.Names}}' | grep -q jellyfin; then
+        if $DOCKER_CMD ps --format '{{.Names}}' 2>/dev/null | grep -q jellyfin; then
             log_success "Deployment started!"
             break
         fi
