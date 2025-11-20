@@ -4,14 +4,44 @@
 
 A powerful Python tool that mounts your Real-Debrid account as a virtual drive on Linux using FUSE, with advanced features for Jellyfin, Plex, and the entire *arr stack.
 
-## 🚀 Quick Start
+## 🌟 ULTIMATE ONE-COMMAND DEPLOYMENT (Recommended!)
+
+**Deploy the complete media stack with a beautiful web interface:**
+
+```bash
+git clone https://github.com/FuadPoroshtica/Real-debrid.git
+cd Real-debrid
+./deploy.sh
+```
+
+Your browser opens automatically to a gorgeous web interface where you:
+1. Enter your Real-Debrid API token
+2. (Optional) Add Anthropic API key for AI monitoring
+3. Configure basic settings
+4. Click "Deploy"
+5. **Done!** Access everything at `http://debrid.local`
+
+**Includes:**
+- ✅ Real-Debrid Mount (FUSE + WebDAV)
+- ✅ Jellyfin Media Server
+- ✅ Jellyseerr (Request Management)
+- ✅ Radarr (Movies)
+- ✅ Sonarr (TV Shows)
+- ✅ Prowlarr (Indexers)
+- ✅ AI-Powered Error Monitoring & Auto-Fix
+
+**📚 See [ULTIMATE_DEPLOY.md](ULTIMATE_DEPLOY.md) for the complete deployment guide**
+
+---
+
+## 🚀 Alternative: Manual Setup (Advanced Users)
 
 ```bash
 ./install.sh
 ./start.py
 ```
 
-That's it! The beautiful TUI will guide you through everything.
+The beautiful TUI will guide you through setup and mounting.
 
 ## ✨ Features
 
