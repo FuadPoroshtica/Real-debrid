@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python packages
+RUN pip install --no-cache-dir \
+    anthropic \
+    docker \
+    requests
+
+# Copy AI monitor
+COPY ai_monitor.py .
+
+# Create logs directory
+RUN mkdir -p /logs
+
+# Make executable
+RUN chmod +x ai_monitor.py
+
+CMD ["python3", "ai_monitor.py", "--interval", "60"]

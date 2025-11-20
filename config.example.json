@@ -1,0 +1,4 @@
+{
+  "api_token": "YOUR_REAL_DEBRID_API_TOKEN_HERE",
+  "default_mountpoint": "~/realdebrid"
+}

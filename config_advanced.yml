@@ -1,0 +1,270 @@
+# Real-Debrid Mount - Advanced Configuration
+# Inspired by zurg-testing with additional enhancements
+
+# Version identifier
+version: v1
+
+# Real-Debrid API Configuration
+realdebrid:
+  # Your Real-Debrid API token (get from https://real-debrid.com/apitoken)
+  api_token: ""
+
+  # Check for library changes interval (in seconds)
+  check_interval: 60
+
+  # Enable automatic health checks for torrents
+  enable_health_checks: true
+
+  # Enable automatic repair of failed/missing files
+  enable_repair: true
+
+  # Automatically delete RAR-only torrents (keeps video files)
+  auto_delete_rar_torrents: true
+
+  # Concurrent workers for parallel operations
+  concurrent_workers: 5
+
+  # API timeout (seconds)
+  api_timeout: 30
+
+  # Retry failed requests
+  max_retries: 3
+
+# Mount Configuration
+mount:
+  # Mount point path
+  mountpoint: ~/realdebrid
+
+  # Enable WebDAV server for rclone compatibility
+  enable_webdav: true
+
+  # WebDAV server configuration
+  webdav:
+    host: 0.0.0.0
+    port: 9999
+    username: ""
+    password: ""
+
+  # FUSE mount options
+  fuse_options:
+    allow_other: true
+    default_permissions: false
+    auto_cache: true
+    kernel_cache: false
+    entry_timeout: 30
+    attr_timeout: 30
+    negative_timeout: 5
+
+  # VFS cache configuration
+  vfs_cache:
+    enabled: true
+    mode: "full"  # Options: off, minimal, writes, full
+    dir_cache_time: 10
+    max_age: 3600
+    poll_interval: 60
+
+# Media Organization
+media:
+  # Movies library path
+  movies_path: ~/media/movies
+
+  # TV shows library path
+  tv_path: ~/media/tv
+
+  # Enable symlink resolver
+  enable_resolver: true
+
+  # Resolver watch mode (continuous monitoring)
+  resolver_watch: false
+
+  # Watch interval (seconds)
+  resolver_watch_interval: 60
+
+# Advanced Directory Structure
+# Define custom directory layouts with filtering
+directories:
+  # Movies directory with filtering
+  - path: movies
+    group: "movies"
+    group_order: 10
+    filters:
+      # Only include torrents with these patterns
+      include_regex:
+        - ".*\\.(mkv|mp4|avi|mov)$"
+      # Exclude these patterns
+      exclude_regex:
+        - ".*sample.*"
+        - ".*trailer.*"
+      # Minimum file size (MB)
+      min_file_size: 100
+      # Only show biggest file in multi-file torrents
+      only_show_biggest_file: true
+    # Actions on file detection
+    actions:
+      - type: "symlink"
+        destination: "{{movies_path}}/{{torrent_name}}"
+
+  # TV Shows directory with episode detection
+  - path: tv
+    group: "tvshows"
+    group_order: 20
+    filters:
+      include_regex:
+        - ".*[Ss]\\d{2}[Ee]\\d{2}.*"
+        - ".*\\d{1,2}x\\d{2}.*"
+      min_file_size: 50
+      has_episodes: true
+    actions:
+      - type: "symlink"
+        destination: "{{tv_path}}/{{show_name}}/Season {{season}}"
+
+  # Anime directory (optional)
+  - path: anime
+    group: "anime"
+    group_order: 30
+    filters:
+      include_regex:
+        - ".*\\[.*\\].*\\.(mkv|mp4)$"
+      keywords:
+        - "anime"
+        - "episode"
+    actions:
+      - type: "symlink"
+        destination: "{{tv_path}}/{{show_name}}/Season {{season}}"
+
+# Library Update Hooks
+# Execute commands when library changes detected
+hooks:
+  on_library_update:
+    enabled: false
+    commands:
+      # Notify Plex to scan library
+      - type: "shell"
+        command: "curl -X POST 'http://localhost:32400/library/sections/all/refresh?X-Plex-Token=YOUR_TOKEN'"
+        async: true
+
+      # Notify Jellyfin to scan
+      - type: "shell"
+        command: "curl -X POST 'http://localhost:8096/Library/Refresh?api_key=YOUR_API_KEY'"
+        async: true
+
+      # Custom script execution
+      - type: "script"
+        path: "./scripts/custom_update.sh"
+        async: false
+
+  on_torrent_complete:
+    enabled: false
+    commands:
+      - type: "shell"
+        command: "echo 'Torrent {{torrent_name}} completed' >> /tmp/rd_notifications.log"
+
+  on_health_check_fail:
+    enabled: false
+    commands:
+      - type: "notification"
+        message: "Torrent {{torrent_id}} failed health check"
+
+# Cleanup Rules
+cleanup:
+  # Enable automatic cleanup
+  enabled: true
+
+  # Remove torrents older than X days (0 = disabled)
+  remove_old_torrents_days: 0
+
+  # Remove incomplete torrents
+  remove_incomplete: false
+
+  # Clean up empty directories
+  remove_empty_dirs: true
+
+  # Archive/RAR handling
+  rar_handling:
+    # Auto-extract RAR archives
+    auto_extract: false
+    # Delete RAR files after extraction
+    delete_after_extract: false
+    # Delete RAR-only torrents (no video files)
+    delete_rar_only_torrents: true
+
+# Performance Tuning
+performance:
+  # Enable caching
+  enable_cache: true
+
+  # Cache size (MB)
+  cache_size: 512
+
+  # Cache TTL (seconds)
+  cache_ttl: 300
+
+  # Prefetch file metadata
+  prefetch_metadata: true
+
+  # Parallel downloads
+  parallel_downloads: 3
+
+  # Read-ahead buffer size (KB)
+  read_ahead_kb: 4096
+
+  # Use HTTP/2 for downloads
+  use_http2: true
+
+# Logging Configuration
+logging:
+  # Log level: debug, info, warning, error
+  level: info
+
+  # Log file path
+  file: ~/.config/rdmount/rdmount.log
+
+  # Log rotation
+  rotation:
+    enabled: true
+    max_size_mb: 10
+    max_files: 5
+
+  # Enable debug mode
+  debug: false
+
+# Integration Settings
+integrations:
+  # Plex integration
+  plex:
+    enabled: false
+    url: "http://localhost:32400"
+    token: ""
+    library_sections: []
+
+  # Jellyfin integration
+  jellyfin:
+    enabled: false
+    url: "http://localhost:8096"
+    api_key: ""
+
+  # Radarr integration
+  radarr:
+    enabled: false
+    url: "http://localhost:7878"
+    api_key: ""
+
+  # Sonarr integration
+  sonarr:
+    enabled: false
+    url: "http://localhost:8989"
+    api_key: ""
+
+# Experimental Features
+experimental:
+  # Enable transcoding proxy
+  transcoding_proxy: false
+
+  # Enable direct play optimization
+  direct_play_optimization: true
+
+  # Enable intelligent caching based on viewing patterns
+  smart_caching: false
+
+  # Enable bandwidth limiting (KB/s, 0 = unlimited)
+  bandwidth_limit: 0

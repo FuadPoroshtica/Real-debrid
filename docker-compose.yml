@@ -1,0 +1,248 @@
+version: '3.8'
+
+# Real-Debrid Complete Media Stack
+# One-command deployment for full media server
+
+services:
+  # Real-Debrid Mount (Our Tool)
+  realdebrid-mount:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: realdebrid-mount
+    restart: unless-stopped
+    devices:
+      - /dev/fuse
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+      - RD_API_TOKEN=${RD_API_TOKEN}
+      - ENABLE_WEBDAV=true
+      - ENABLE_HEALTH_CHECKS=true
+    volumes:
+      - ${CONFIG_DIR:-./config}:/config
+      - ${MEDIA_DIR:-./media}:/media
+      - realdebrid-mount:/mnt/realdebrid:shared
+    ports:
+      - "9999:9999"  # WebDAV
+    networks:
+      - media-stack
+    healthcheck:
+      test: ["CMD", "mountpoint", "-q", "/mnt/realdebrid"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jellyfin Media Server
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - jellyfin-config:/config
+      - jellyfin-cache:/cache
+      - realdebrid-mount:/media/realdebrid:ro
+      - ${MEDIA_DIR:-./media}:/media/organized:ro
+    ports:
+      - "8096:8096"
+      - "8920:8920"
+      - "7359:7359/udp"
+      - "1900:1900/udp"
+    networks:
+      - media-stack
+    depends_on:
+      - realdebrid-mount
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8096/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jellyseerr Request Management
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-UTC}
+      - LOG_LEVEL=info
+    volumes:
+      - jellyseerr-config:/app/config
+    ports:
+      - "5055:5055"
+    networks:
+      - media-stack
+    depends_on:
+      - jellyfin
+      - radarr
+      - sonarr
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5055/api/v1/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Radarr Movie Management
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - radarr-config:/config
+      - ${MEDIA_DIR:-./media}/movies:/movies
+      - ${DOWNLOAD_DIR:-./downloads}:/downloads
+    ports:
+      - "7878:7878"
+    networks:
+      - media-stack
+    depends_on:
+      - prowlarr
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7878/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Sonarr TV Management
+  sonarr:
+    image: linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - sonarr-config:/config
+      - ${MEDIA_DIR:-./media}/tv:/tv
+      - ${DOWNLOAD_DIR:-./downloads}:/downloads
+    ports:
+      - "8989:8989"
+    networks:
+      - media-stack
+    depends_on:
+      - prowlarr
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8989/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prowlarr Indexer Management
+  prowlarr:
+    image: linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - prowlarr-config:/config
+    ports:
+      - "9696:9696"
+    networks:
+      - media-stack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9696/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./html:/usr/share/nginx/html:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - media-stack
+    depends_on:
+      - jellyfin
+      - jellyseerr
+      - radarr
+      - sonarr
+      - prowlarr
+
+  # AI Error Monitor (Claude-powered)
+  ai-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai-monitor
+    container_name: ai-monitor
+    restart: unless-stopped
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MONITOR_INTERVAL=60
+      - AUTO_FIX_ENABLED=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${CONFIG_DIR:-./config}:/config
+      - ai-monitor-logs:/logs
+    networks:
+      - media-stack
+    depends_on:
+      - jellyfin
+      - jellyseerr
+      - radarr
+      - sonarr
+      - prowlarr
+
+  # Service Configurator (Auto-setup)
+  service-configurator:
+    image: python:3.11-slim
+    container_name: service-configurator
+    restart: "no"
+    environment:
+      - RD_API_TOKEN=${RD_API_TOKEN}
+      - JELLYFIN_API_KEY=${JELLYFIN_API_KEY:-}
+    volumes:
+      - ./service_configurator.py:/app/service_configurator.py:ro
+      - ${CONFIG_DIR:-./config}:/config
+      - radarr-config:/radarr-config
+      - sonarr-config:/sonarr-config
+      - prowlarr-config:/prowlarr-config
+    networks:
+      - media-stack
+    depends_on:
+      - radarr
+      - sonarr
+      - prowlarr
+      - jellyfin
+    command: >
+      sh -c "pip install requests --quiet &&
+             sleep 60 &&
+             python /app/service_configurator.py"
+
+volumes:
+  realdebrid-mount:
+    driver: local
+  jellyfin-config:
+  jellyfin-cache:
+  jellyseerr-config:
+  radarr-config:
+  sonarr-config:
+  prowlarr-config:
+  ai-monitor-logs:
+
+networks:
+  media-stack:
+    driver: bridge
