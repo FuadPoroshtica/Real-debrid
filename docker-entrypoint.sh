@@ -37,7 +37,7 @@ fi
 
 # Mount Real-Debrid
 echo "Mounting Real-Debrid..."
-python3 /app/rdmount.py mount /mnt/realdebrid --daemon
+python3 /app/rdmount.py mount /mnt/realdebrid --token "$RD_API_TOKEN" --daemon
 
 # Start resolver watcher for automatic media organization
 echo "Starting media resolver (auto-organizes content for Jellyfin)..."
