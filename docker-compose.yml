@@ -160,6 +160,29 @@ services:
       timeout: 10s
       retries: 3
 
+  # Jackett Indexer Proxy (Alternative/Supplement to Prowlarr)
+  jackett:
+    image: linuxserver/jackett:latest
+    container_name: jackett
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+      - AUTO_UPDATE=true
+    volumes:
+      - jackett-config:/config
+      - ${DOWNLOAD_DIR:-./downloads}:/downloads
+    ports:
+      - "9117:9117"
+    networks:
+      - media-stack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9117/UI/Dashboard"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
@@ -239,6 +262,7 @@ volumes:
   radarr-config:
   sonarr-config:
   prowlarr-config:
+  jackett-config:
   ai-monitor-logs:
 
 networks:
