@@ -27,7 +27,7 @@ services:
     volumes:
       - ${CONFIG_DIR:-./config}:/config
       - ${MEDIA_DIR:-./media}:/media
-      - realdebrid-mount:/mnt/realdebrid:shared
+      - realdebrid-mount:/mnt/realdebrid
     ports:
       - "9999:9999"  # WebDAV
     networks:

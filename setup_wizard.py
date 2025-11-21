@@ -32,8 +32,11 @@ def save_state(state):
 
 
 @app.route('/')
+@app.route('/setup')
+@app.route('/deploying')
+@app.route('/complete')
 def index():
-    """Main setup page"""
+    """Main setup page - handles all states"""
     state = load_state()
 
     if state['status'] == 'deploying':
@@ -151,6 +154,12 @@ def get_status():
     """Get current deployment status"""
     state = load_state()
     return jsonify(state)
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    """Redirect any 404s back to the main page"""
+    return redirect('/')
 
 
 if __name__ == '__main__':
