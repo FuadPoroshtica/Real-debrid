@@ -23,6 +23,18 @@ def get_version():
     return 'v4.3.9'
 
 
+@app.route('/api/v2/app/webapiVersion')
+def get_webapi_version():
+    """qBittorrent Web API version"""
+    return '2.8.3'
+
+
+@app.route('/version/api')
+def get_api_version():
+    """Legacy qBittorrent API version endpoint"""
+    return '2.8.3'
+
+
 @app.route('/api/v2/auth/login', methods=['POST'])
 def login():
     """Fake login for compatibility"""
