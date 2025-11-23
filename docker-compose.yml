@@ -36,13 +36,14 @@ services:
       timeout: 10s
       retries: 3
 
-  # Real-Debrid Download Client Bridge
+  # Debrid Download Client Bridge (Real-Debrid or AllDebrid)
   rd-bridge:
     image: python:3.11-slim
     container_name: rd-bridge
     restart: unless-stopped
     environment:
-      - RD_API_TOKEN=${RD_API_TOKEN}
+      - RD_API_TOKEN=${RD_API_TOKEN:-}
+      - AD_API_TOKEN=${AD_API_TOKEN:-}
     volumes:
       - ./rd_bridge.py:/app/rd_bridge.py:ro
     working_dir: /app
