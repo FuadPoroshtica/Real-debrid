@@ -1,8 +1,8 @@
-# Real-Debrid Mount for Jellyfin
+# Debrid Mount for Jellyfin (Real-Debrid & AllDebrid)
 
-**The most advanced and easy-to-use Real-Debrid solution - combining the best of zurg with superior usability!**
+**The most advanced and easy-to-use debrid solution - combining the best of zurg with superior usability!**
 
-A powerful Python tool that mounts your Real-Debrid account as a virtual drive on Linux using FUSE, with advanced features for Jellyfin, Plex, and the entire *arr stack.
+A powerful Python tool that mounts your Real-Debrid or AllDebrid account as a virtual drive on Linux using FUSE, with advanced features for Jellyfin, Plex, and the entire *arr stack.
 
 ## 🌟 ULTIMATE ONE-COMMAND DEPLOYMENT (Recommended!)
 
@@ -22,7 +22,7 @@ Your browser opens automatically to a gorgeous web interface where you:
 5. **Done!** Access everything at `http://debrid.local`
 
 **Includes:**
-- ✅ Real-Debrid Mount (FUSE + WebDAV)
+- ✅ Debrid Mount (Real-Debrid or AllDebrid via FUSE + WebDAV)
 - ✅ Jellyfin Media Server
 - ✅ Jellyseerr (Request Management)
 - ✅ Radarr (Movies)
@@ -47,8 +47,8 @@ The beautiful TUI will guide you through setup and mounting.
 
 ### Core Features
 - **Beautiful TUI** - Interactive menu-driven interface with rich formatting
-- **FUSE Mount** - Mount Real-Debrid torrents as a virtual filesystem
-- ***arr Stack Integration** - Full support for Radarr, Sonarr, Jellyseerr, Prowlarr
+- **FUSE Mount** - Mount Real-Debrid or AllDebrid torrents as a virtual filesystem
+- ***arr Stack Integration** - Full support for Radarr, Sonarr, Jellyseerr, Prowlarr with automatic service detection
 - **Automatic Organization** - Smart file organization by media type
 - **Symlink Resolver** - Creates organized symlinks for media management
 - **Lazy Loading** - Stream on-demand, no local storage required
@@ -74,7 +74,7 @@ The beautiful TUI will guide you through setup and mounting.
 - Linux operating system
 - Python 3.7 or higher
 - FUSE (Filesystem in Userspace)
-- Active Real-Debrid premium account
+- Active Real-Debrid or AllDebrid premium account
 
 ## Installation
 
@@ -124,9 +124,17 @@ pip3 install -r requirements.txt
 
 ### 1. Get Your API Token
 
+**For Real-Debrid:**
 1. Log in to your Real-Debrid account
 2. Visit: https://real-debrid.com/apitoken
 3. Copy your API token
+
+**For AllDebrid:**
+1. Log in to your AllDebrid account
+2. Visit: https://alldebrid.com/apikeys/
+3. Generate and copy your API token
+
+> **Note:** The bridge automatically detects which service to use based on environment variables. If `AD_API_TOKEN` is set, it uses AllDebrid; otherwise, it uses Real-Debrid.
 
 ### 2. Setup the Tool
 
